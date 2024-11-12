@@ -1,0 +1,48 @@
+{
+  "statistics": [
+    {
+      "type": "sales",
+      "timeframe": "monthly",
+      "data": [100, 120, 90, 150, 200]
+    },
+    {
+      "type": "sales",
+      "timeframe": "weekly",
+      "data": [30, 40, 35, 50, 45]
+    },
+    {
+      "type": "sales",
+      "timeframe": "daily",
+      "data": [5, 6, 7, 8, 9]
+    },
+    {
+      "type": "customers",
+      "timeframe": "monthly",
+      "data": [20, 25, 30, 35, 40]
+    },
+    {
+      "type": "customers",
+      "timeframe": "weekly",
+      "data": [5, 10, 15, 10, 5]
+    },
+    {
+      "type": "customers",
+      "timeframe": "daily",
+      "data": [1, 2, 3, 4, 5]
+    }
+  ],
+  "sections": [
+    {
+      "id": 1,
+      "name": "main"
+    },
+    {
+      "id": 2,
+      "name": "statistics"
+    },
+    {
+      "id": 3,
+      "name": "dummy"
+    }
+  ]
+}
