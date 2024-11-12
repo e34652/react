@@ -4,6 +4,7 @@ import DashBoard from './components/DashBoard';
 import Dummy from './components/Dummy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Main from './components/Main';
 
 
 const queryClient = new QueryClient();
