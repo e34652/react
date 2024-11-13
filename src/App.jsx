@@ -1,3 +1,4 @@
+//App.jsx
 import React from 'react';
 import Header from './components/Header';
 import DashBoard from './components/DashBoard';
@@ -9,6 +10,8 @@ import Main from './components/Main';
 
 const queryClient = new QueryClient();
 
+
+
 function App() {
   return (
     <BrowserRouter>
@@ -16,9 +19,10 @@ function App() {
 
         <Header />
         <Routes>
+          <Route path="/" element={<Main />} />
           <Route path="/main" element={<Main />} />
           <Route path="/dummy" element={<Dummy />} />
-          <Route path="/statistics" element={<DashBoard />} />
+          <Route path="/statistics" element={<DashBoard />} />       
         </Routes>
 
       </QueryClientProvider>

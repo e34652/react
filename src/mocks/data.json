@@ -1,34 +1,58 @@
 {
-  "statistics": [
+  "records": [
+    { "id": 1, "date": "2024-11-13", "typeA": 245, "typeB": 215 },
+    { "id": 2, "date": "2024-11-12", "typeA": 130, "typeB": 100 },
+    { "id": 3, "date": "2024-11-11", "typeA": 285, "typeB": 255 },
+    { "id": 4, "date": "2024-11-10", "typeA": 60, "typeB": 30 },
+    { "id": 5, "date": "2024-11-09", "typeA": 200, "typeB": 170 },
+    { "id": 6, "date": "2024-11-08", "typeA": 175, "typeB": 145 },
+    { "id": 7, "date": "2024-11-07", "typeA": 95, "typeB": 65 },
+    { "id": 8, "date": "2024-11-06", "typeA": 220, "typeB": 190 },
+    { "id": 9, "date": "2024-11-05", "typeA": 140, "typeB": 110 },
+    { "id": 10, "date": "2024-11-04", "typeA": 275, "typeB": 245 },
+    { "id": 11, "date": "2024-11-03", "typeA": 85, "typeB": 55 },
+    { "id": 12, "date": "2024-11-02", "typeA": 250, "typeB": 220 },
+    { "id": 13, "date": "2024-11-01", "typeA": 105, "typeB": 75 },
+    { "id": 14, "date": "2024-10-31", "typeA": 180, "typeB": 150 },
+    { "id": 15, "date": "2024-10-30", "typeA": 70, "typeB": 40 },
+    { "id": 16, "date": "2024-10-29", "typeA": 290, "typeB": 260 },
+    { "id": 17, "date": "2024-10-28", "typeA": 155, "typeB": 125 },
+    { "id": 18, "date": "2024-10-27", "typeA": 210, "typeB": 180 },
+    { "id": 19, "date": "2024-10-26", "typeA": 115, "typeB": 85 },
+    { "id": 20, "date": "2024-10-25", "typeA": 265, "typeB": 235 },
+    { "id": 21, "date": "2024-10-24", "typeA": 50, "typeB": 20 },
+    { "id": 22, "date": "2024-10-23", "typeA": 240, "typeB": 210 },
+    { "id": 23, "date": "2024-10-22", "typeA": 135, "typeB": 105 },
+    { "id": 24, "date": "2024-10-21", "typeA": 185, "typeB": 155 },
+    { "id": 25, "date": "2024-10-20", "typeA": 90, "typeB": 60 },
+    { "id": 26, "date": "2024-10-19", "typeA": 280, "typeB": 250 },
+    { "id": 27, "date": "2024-10-18", "typeA": 125, "typeB": 95 },
+    { "id": 28, "date": "2024-10-17", "typeA": 160, "typeB": 130 },
+    { "id": 29, "date": "2024-10-16", "typeA": 225, "typeB": 195 },
+    { "id": 30, "date": "2024-10-15", "typeA": 145, "typeB": 115 }
+  ],
+  "timeframes": [
     {
-      "type": "sales",
-      "timeframe": "monthly",
-      "data": [100, 120, 90, 150, 200]
+      "id": 1,
+      "period": "day"
     },
     {
-      "type": "sales",
-      "timeframe": "weekly",
-      "data": [30, 40, 35, 50, 45]
+      "id": 2,
+      "period": "week"
     },
     {
-      "type": "sales",
-      "timeframe": "daily",
-      "data": [5, 6, 7, 8, 9]
+      "id": 3,
+      "period": "month"
+    }
+  ],
+  "types": [
+    {
+      "id": 1,
+      "type": "typeA"
     },
     {
-      "type": "customers",
-      "timeframe": "monthly",
-      "data": [20, 25, 30, 35, 40]
-    },
-    {
-      "type": "customers",
-      "timeframe": "weekly",
-      "data": [5, 10, 15, 10, 5]
-    },
-    {
-      "type": "customers",
-      "timeframe": "daily",
-      "data": [1, 2, 3, 4, 5]
+      "id": 2,
+      "type": "typeB"
     }
   ],
   "sections": [
