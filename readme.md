@@ -1,19 +1,261 @@
-<details>
-  <summary><strong>1. Modal, Portal</strong></summary>
+# React 학습 노트
 
-### 📌 포탈(Portal)
+<details>
+  <summary><strong>a. Component Life Cycle</strong></summary>
+
+<details><summary><strong>1. 라이프 사이클</strong></summary>
+
+## 정의
+
+컴포넌트가 마운트 → 업데이트 → 언마운트로 지나가는 개념적 시간 흐름.  
+이 흐름의 특정 지점에 무엇을 할 수 있는지를 규정함.
+
+## 단계
+
+- 렌더 단계:  
+  UI 계산(부수효과 금지 = 순수성)
+
+- 커밋 단계:  
+  DOM 반영, ref 연결, 이펙트 실행  
+  (Before-mutation → Mutation → Layout)
+
+- 브라우저 페인트 후:  
+패시브 이펙트(useEffect) 비동기 실행
+</details>
+
+<details><summary><strong>2. 컴포넌트</strong></summary>
+
+## 클래스 컴포넌트
+
+Hook이 나오기 전(16.8 이전) 활용되던 컴포넌트.  
+ES6 class로 컴포넌트를 만들고, Method를 통해 시점을 표현.
+
+현재 표준은 함수 컴포넌트 + Hooks이지만 동작은 여전히 지원됨.  
+하지만 에러 바운더리 등 몇몇 기능은 여전히 클래스 방식이 표준임.
+
+### 특징:
+
+- 인스턴스(this)가 존재함
+- 상태 업데이트가 부분 병합으로 진행됨
+- createRef로 refs 사용
+
+## 함수 컴포넌트
+
+함수가 props를 받아 JSX를 반환하는 형태로 활용됨.  
+Hook으로 상태/이펙트/구독 등을 선언해 시점을 표현
+
+### 특징:
+
+- 인스턴스(this)가 없고 Hook(useState 등)으로 상태를 관리함.
+- 상태 업데이트는 교체(replace)가 기본(객체 병합은 직접 수행).
+- Server Components는 함수 컴포넌트만 지원함(Hook 사용 불가).
+</details>
+<details><summary><strong>3. 클래스 컴포넌트 ↔ 함수 컴포넌트</strong></summary>
+
+## 컴포넌트별 라이프 사이클
+
+### 마운트 직후(커밋 Layout 단계, 페인트 전 동기 실행)
+
+- 클래스: componentDidMount
+- 함수: useLayoutEffect(() => { ... }, [])
+
+### 마운트/업데이트 후(페인트 후)
+
+- 클래스: 클래스는 페인트 후 전용 메서드 없음
+- 함수: useEffect 실행
+
+### 업데이트 직전 스냅샷(커밋 Before-mutation)
+
+- 클래스: getSnapshotBeforeUpdate
+- 함수: useLayoutEffect의 cleanup에서 스냅샷 캡처(+ ref) 패턴
+
+### 업데이트 후(커밋 Layout, 페인트 전 동기)
+
+- 클래스: componentDidUpdate
+- 함수: useLayoutEffect(() => { ... }, [deps])
+
+### 언마운트/업데이트 정리
+
+- 클래스: componentWillUnmount
+- 함수: useEffect의 Clean Up  
+  (레이아웃 단계 정리는 useLayoutEffect의 Clean Up - Before-mutaition에 실행됨)
+
+### 렌더 스킵 최적화
+
+- 클래스: shouldComponentUpdate
+- 함수: React.memo(주) + useMemo/useCallback(보조)
+
+</details>
+
+ </details>
+
+#
+
+<details>
+
+<summary><strong>b. Mount, Unmount</strong></summary>
+
+<details><summary><strong>1. Mount</strong></summary>
+
+## 정의
+
+첫 커밋에서 컴포넌트가 트리에 배치되고, DOM이 생성/연결되며,  
+state와 refs가 초기화될 때(React 관점의 “처음 등장”)
+
+## 예시
+
+- 조건부 렌더에서 show=false → true가 되어 노드가 새로 생길 때  
+  (또는 JSX에서 제외→포함될 때만 마운트)
+- 키(key) 변경으로 이전 노드가 교체될 때  
+  (key가 바뀌면 상태/이펙트가 파기되고 완전한 언마운트→마운트가 일어남)
+
+- 라우트/분기 전환 등으로 새 노드가 생성될 때  
+  (중첩 라우팅에선 변경된 경로의 서브트리만 마운트될 수 있음)
+
+## 마운트 직후
+
+커밋의 Layout 단계가 실행됨  
+ref 연결 → useLayoutEffect / componentDidMount 동기 실행 (페인트 전)  
+→ 브라우저 페인트 → useEffect 비동기 실행
+
+</details>
+
+<details><summary><strong>2. Unmount</strong></summary>
+
+## 정의
+
+커밋의 Mutation 단계에서 DOM/refs가 분리·제거되고, 이어서 상태/이펙트가 파기될 때
+
+## 예시
+
+- 조건부 렌더에서 show=true → false로 노드가 사라질 때
+
+- 리스트 재조합/키 변경으로 노드가 교체될 때
+
+- 부모가 내려가면서 하위가 함께 제거될 때  
+  (부모가 언마운트되면 자식 서브트리도 함께 언마운트됨)
+
+- 라우팅/분기 전환 등으로 해당 서브트리가 없어질 때
+
+## 언마운트 직전
+
+(커밋 중, 페인트 전) useLayoutEffect cleanup 실행  
+→ DOM이 제거되기 직전에 동기 정리 기회  
+(Mutation 이후에도 해당 노드의 DOM/refs가 존재할 경우)
+
+## 언마운트 직후
+
+(보통 페인트 이후) useEffect cleanup 실행  
+→ 구독/타이머/리스너 정리 등
+
+페인트 이후 비동기로 실행되므로  
+레이아웃 측정/동기 DOM 접근에는 부적합
+
+## Clean Up
+
+LayoutEffect: 페인트 전(동기)  
+useEffect: 페인트 후(비동기)
+
+</details>
+
+<details><summary><strong>3. 참고</strong></summary>
+
+\* 숨김은 언마운트가 아니며 언마운트 후 setState는 무시됨  
+(비동기 작업·구독은 cleanup에서 반드시 취소/해제)
+
+\* ref는 Mutation 단계에서 먼저 null로 분리되므로  
+이후 Layout 단계의 cleanup/콜백에서의 ref.current를 신뢰하지 말 것
+\*StrictMode에서 초기 마운트 직후 즉시 언마운트→재마운트 시뮬레이션 가능(부작용 탐지용).
+
+\* 서버에선 브라우저 DOM이 없어 마운트/이펙트가 실행되지 않음.  
+(하이드레이션 시 마운트 시점에 이펙트가 실행됨)
+
+<details><summary> 하이드레이션(hydration)</summary>
+
+## 정의
+
+서버가 미리 그려 보낸 정적 HTML를 클라이언트에서 JS를 통해 인터랙티브하게 만드는 과정.
+
+React가 HTML에 이미 있는 DOM을 재사용하여 React 앱을 연결(attach) 하는 것.  
+(이벤트 리스너 등록, refs 연결, 마운트 시점에 이펙트 실행)
+
+## 흐름
+
+서버:
+
+- renderToString / 스트리밍 SSR로 HTML 전송
+
+브라우저:
+
+- HTML 먼저 페인트(사용자에게 바로 보임) → JS 번들 로드 → hydrateRoot 호출
+
+React:
+
+- 기존 DOM과 가상 트리를 매칭 → 이벤트/refs 연결 → 이펙트 실행
+- 시점  
+  useLayoutEffect: 커밋 직후 동기 실행(페인트 전)  
+  useEffect: 페인트 후 비동기 실행
+
+=> 사용자 입장에선 화면이 “먼저 보이고”, 곧이어 상호작용이 가능해짐
+
+## 하이드레이션이 아닌 경우
+
+- CSR 초기 마운트:  
+  HTML 없이 JS가 DOM을 처음부터 생성
+
+- 리렌더:  
+  이미 하이드레이션이 끝난 뒤의 일반적인 상태 업데이트
+
+- 단순 표시/숨김:  
+  DOM을 유지한 채 CSS로 숨기는 건 하이드레이션과 무관
+
+## 불일치(mismatch) 처리
+
+서버 HTML과 클라이언트 렌더 결과가 다를 경우  
+React가 경고를 띄우고, 그 서브트리만 폐기·재생성할 수 있음  
+(이 경우 해당 부분은 DOM을 새로 만듦).
+
+## 불일치를 유발하는 원인
+
+- 랜덤/시간 의존 값(예: Date.now()), locale 차이
+
+- 서버/클라이언트에서 다른 데이터 소스
+
+- ID/키 불일치
+
+- 의도적 차이는 suppressHydrationWarning 등으로 최소화
+
+## 장점
+
+초기 콘텐츠가 빨리 보임(SEO/퍼포먼스), TTFB/FP 개선
+
+## 단점
+
+JS 번들 다운로드·실행 + 하이드레이션 비용이 추가(복잡한 페이지일수록 큼)
+
+</details>
+
+</details>
+</details>
+
+#
+
+<details>
+  <summary><strong>c. Portal, Modal</strong></summary>
+
+## 포탈(Portal)
 
 - 렌더링될 코드를 **다른 DOM 위치로 옮겨주는 기술**
 - `ReactDOM.createPortal`을 활용
 
-### 📌 모달과 포탈의 관계
+## 모달과 포탈의 관계
 
 - 모달은 포탈 없이도 구현 가능하지만, 이 경우 **컴포넌트의 하위 요소**로 렌더링됨
 - 시각적으로 **페이지 최상단 레이어**에 위치하는 모달이  
   다른 요소의 하위에 존재하는 것은 **논리적으로 맞지 않음**
 - 포탈을 사용하면 모달을 최상단에 위치시켜 이러한 점을 해소 가능
 
-### 💡 포탈을 사용하는 이유
+## 포탈을 사용하는 이유
 
 1. **스타일 안정성 & 컨텍스트 분리**
    - DOM 계층을 분리해 다른 컴포넌트로부터 독립
@@ -28,21 +270,28 @@
 
 </details>
 
-<details>  <summary><strong>2. useRef</strong></summary>
-<details> <summary><strong>0) 요약</strong></summary>
+#
 
-useState: 값이 바뀌면 렌더링이 필요한 UI 상태에 사용.
+<details>  <summary><strong>d. useRef</strong></summary>
+<details> <summary><strong>요약</strong></summary>
 
-useRef: 값이 바뀌어도 렌더링이 불필요한 내부 값/DOM 노드/외부 인스턴스에 사용. 포커스·스크롤·측정에 적합.
+useState:  
+값이 바뀌면 렌더링이 필요한 UI 상태에 사용.
 
-forwardRef: 부모가 준 ref를 자식의 실제 DOM으로 전달.
+useRef:  
+값이 바뀌어도 렌더링이 불필요한 내부 값/DOM 노드/외부 인스턴스에 사용.  
+→ 포커스·스크롤·측정에 적합.
 
-useImperativeHandle: 부모에 선택적 메서드만 노출(캡슐화)해 내부 DOM 의존 줄이기.
+forwardRef:  
+부모가 준 ref를 자식의 실제 DOM으로 전달.
+
+useImperativeHandle:  
+부모에 선택적 메서드만 노출(캡슐화)해 내부 DOM 의존을 줄임.
 
 </details>
-<details> <summary><strong>1) useState vs useRef — 언제 무엇을 쓰나</strong></summary>
+<details> <summary><strong>1. useState vs useRef — 언제 무엇을 쓰나</strong></summary>
 
-useState
+## useState
 
 O:  
 변경 시 UI에 즉시 반영되어야 하는 값
@@ -51,7 +300,7 @@ O:
 X:  
 UI에 영향이 없는 시스템 값을 useState로 관리하면 불필요한 렌더링 발생
 
-useRef
+## useRef
 
 O:  
 UI로 직접 표시하지 않는 값, 렌더링과 무관한 내부 값  
@@ -65,27 +314,54 @@ useRef 변경은 렌더링을 유발하지 않음 → 화면 업데이트가 필
 
 </details>
 <details> <summary><strong>2) useRef 기본 개념과 핵심 규칙</strong></summary>
-const ref = useRef(initialValue); // = { current: initialValue }
 
-ref.current를 읽고 쓸 수 있지만 렌더링은 유발하지 않음.
+## 정의
 
-사용처: 포커스/스크롤/측정, 타이머 보관, 외부 인스턴스(D3/Chart.js 등) 저장.
+컴포넌트가 리렌더링되어도 유지되지만  
+값이 변경되어도 렌더링을 유발하지 않는 참조를 만들어주는 Hook.
 
-React가 관리하는 DOM을 파괴적으로 조작하지 말기(충돌 위험). 불가피하면 비파괴적 조작만.
+## 특징
 
-파괴적 조작:  
-React가 “그려야 한다고 알고 있는” DOM 트리/속성을 직접 바꿔서  
-다음 렌더에서 덮어쓰이거나 불일치를 일으킬 가능성이 있는 조작.
+- 지속성:  
+  렌더 사이에 값이 유지됨 (컴포넌트의 메모리 역할).
 
-비파괴적 조작:  
-DOM 구조나 React가 관리하는 속성은 건드리지 않고,  
-읽기/포커스/스크롤/측정/브라우저 고유 API 같은 부수효과성 작업만 하는 조작.
+- 비반응성:  
+  ref.current 변경은 리렌더를 유발하지 않음.
 
-왜?
+- 안정적 식별자:  
+  같은 컴포넌트 생애 동안 ref 객체 자체는 변하지 않음.
 
-React는 가상 DOM을 단일 진실로 삼아 다음 렌더 때 실제 DOM을 그 상태로 동기화함.  
-React가 관리하는 부분을 조작하면 예상 못한 불일치가 날 수 있음.
-이러한 부분이 바로 React가 선언적 언어라는 특징임.
+- DOM 연결:  
+  JSX에서 ref 속성에 넣으면 커밋 단계에 DOM 노드가 연결 또는 해제됨
+
+- 인스턴스 필드의 대체품:  
+  클래스의 인스턴스 필드 같은 용도에 대응.
+
+## 사용처
+
+포커스 / 스크롤 / 측정 / 타이머 보관 / 외부 인스턴스(D3/Chart.js 등) 저장 등.
+
+## 주의사항
+
+React가 관리하는 DOM을 파괴적으로 조작하면 안됨(충돌 위험).
+
+- 파괴적 조작:  
+  React가 렌더로 설정한 속성/구조를 직접 바꿔서  
+  커밋 단계에서 덮어쓰이거나 불일치를 일으킬 가능성이 있는 조작.
+
+- 비파괴적 조작:  
+  DOM 구조나 React가 렌더로 설정한 속성은 건드리지 않고,  
+  읽기/포커스/스크롤/측정/브라우저 고유 API 같은 부수효과성 작업만 하는 조작.
+
+## 왜?
+
+React의 단일 진실(SSOT)은 상태(state/props)이고, 이를 바탕으로 UI가 계산되는데,  
+이렇게 계산된 UI를 useRef로 직접 조작하면 React의 상태와 불일치가 생김.
+
+따라서 개발자는 무엇을 보여줄지 선언하고, 구현은 React에 위임해야 함.  
+React의 구현에 간섭하면 예상치 못한 오류가 생길 수 있으며,  
+\
+이러한 부분이 바로 React가 선언적 UI모델이라는 특징임.
 
 </details>
 <details> <summary><strong>3) DOM과 ref의 타이밍 — 언제 값이 설정되나</strong></summary>
@@ -97,29 +373,35 @@ React가 관리하는 부분을 조작하면 예상 못한 불일치가 날 수 
 컴포넌트 함수를 호출해서 다음 UI 스냅샷을 계산하는 단계.
 
 작업:  
-훅 실행(useState, useMemo, useRef 등), JSX 반환,  
-diff(어떤 DOM 변경이 필요한지 목록 작성) 등.
+훅 실행(useState, useMemo, useRef 등), JSX 생성,  
+이전 트리와 비교해 fiber 플래그/이펙트 리스트 준비(무엇을 바꿀지 표기).
 
-이때는 DOM을 조작하지 않고 무엇을 그릴지 계산만 함.
+특징:
 
-Concurrent 모델의 렌더링으로 인한 우선순위로 인해  
-작업이 중단·재개·취소될 수 있음.
+- DOM을 **조작하지 않고**, 무엇을 그릴지 **순수하게** 계산만 함.
+- Concurrent 모델에서는 우선순위에 따라 **중단·재개·취소**될 수 있음.  
+  -> 이 시점의 DOM은 **확정되지 않았을 수 있음**.
 
 <details>
 <summary>Concurrent 모델이란</summary>
+  
+\
+React 18부터의 렌더링 모델로, 렌더 단계를 우선순위에 따라 중단·재개·취소하여,  
+급한 작업 (클릭,타이핑,스크롤)을 우선적으로 처리 후
+렌더를 재개하는 방식으로  
+체감 성능을 높일 수 있음.
 
-React 18부터의 렌더링 모델로, 렌더 단계를 필요에 따라 중단·재개·취소하여,  
-급한 작업 (클릭/타이핑/스크롤) 발생시 렌더를 멈추고 우선 처리 후  
-렌더를 재개하는 방식으로 체감 성능을 높일 수 있음.
-
-병렬(멀티스레드)로 동시에 진행하는 게 아닌,  
-한 스레드에서 우선순위를 바꿔가며 협력적으로 스케줄링하는 방식.
+병렬(멀티스레드)로 동시에 실행하는 게 아닌,  
+한 스레드에서 우선순위를 바꿔가는 협력적 스케줄링 방식.
 
 왜?
 
-기존(동기) 렌더링은 한 번 시작하면 끝날 때까지 메인 스레드를 붙잡음 → 입력 지연, 끊김
+기존(동기) 렌더링은 한 번 시작하면 끝날 때까지 메인 스레드를 점유  
+→ 입력 지연, 끊김
 
-렌더 단계는 이제 interruptible(중단 가능)하지만  
+Concurrent모델에서
+
+렌더 단계는 interruptible(중단 가능)하지만  
 커밋 단계는 여전히 원자적(atomic)임.
 
 (한 번 커밋되면 화면이 그 상태로 일관되게 바뀜.)
@@ -127,7 +409,8 @@ React 18부터의 렌더링 모델로, 렌더 단계를 필요에 따라 중단�
 </details>
 
 \
-따라서 렌더 단계에서는 아직 실제 DOM 노드가 존재하지 않거나 확정되지 않을 수 있음.
+따라서 렌더 단계에서는 아직 실제 DOM 노드가 존재하지 않거나 확정되지 않을 수 있음  
+→ 렌더 중엔 DOM ref가 아직 없을 수 있고, 소유권/시점/조건에 따라 null이 될 수 있다.
 
 </details>
 
@@ -135,23 +418,41 @@ React 18부터의 렌더링 모델로, 렌더 단계를 필요에 따라 중단�
 
 \
 정의:  
-렌더 단계에서 만든 변경 목록(이펙트 리스트)을 진짜 DOM에 적용하는 단계.
+렌더 단계에서 준비된 변경을 실제 DOM에 반영하고  
+관련 이펙트를 실행하는 단계.
 
 작업 순서:  
-Before-mutation:  
-일부 오래된 라이프사이클 준비(getSnapshotBeforeUpdate 등)
+Before-mutation:
 
-Mutation:  
-DOM 추가/삭제/속성 업데이트, 필요 시 기존 ref 분리(detach)
+- DOM 변경 직전에 필요한 읽기/주입 작업을 처리
+- getSnapshotBeforeUpdate, useInsertionEffect (react 18 추가)
+<details><summary>getSnapshotBeforeUpdate</summary>
+변경 직전 마지막 DOM 상태를 캡처해서,
 
-Layout:  
-새 ref 연결(attach) → useLayoutEffect / 클래스 componentDidMount/Update 실행
+변경 후 활용하기 위한 스냅샷 전달 메커니즘.(예: 스크롤 위치 복원 등)
 
-Paint:  
-브라우저가 화면을 그리는 단계
+</details>
+<details><summary>useInsertionEffect</summary>
+레이아웃을 읽기 전, UseLayoutEffect 이전에 스타일 태그를 삽입함. (react18 이후 추가)
 
-Passive Effects:  
-useEffect 실행
+</details>
+
+Mutation:
+
+- DOM 변경(추가/삭제/속성 업데이트)
+- 필요 시 기존 ref 분리(detach)
+
+Layout:
+
+- (Clean Up) → 새 ref 연결(attach) → useLayoutEffect, componentDidMount/Update 실행
+
+Paint:
+
+- 브라우저가 화면을 그리는 단계
+
+Passive Effects:
+
+- useEffect 실행 (일반적으로 페인트 후 실행, 지연/배치될 수 있음)
 
 <details><summary>비차단 작업이란?</summary>
 비차단 작업(Non-blocking work)이란?
