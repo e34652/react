@@ -322,7 +322,7 @@ useEffect: 페인트 후(비동기)
 
 ##
 
-<details><summary> 하이드레이션(hydration)</summary>
+<details><summary><strong>d. Hydration</strong></summary>
 
 ## 정의
 
@@ -371,23 +371,23 @@ DOM 조작 없음(측정/변경 X), 이펙트 실행도 아님.
 
 - Before-mutation:  
   하이드레이션은 “마운트”이므로  
-  이전 커밋의 layout-effect clean up이나 getSnapshotBeforeUpdate는 없음  
-  useInsertionEffect(있다면)만 동기적으로 실행되어  
-  스타일 삽입 등을 처리합니다. (DOM 읽기/변경 금지)
+  이전 커밋의 클린업 또는 스냅샷은 없음  
+  useInsertionEffect 가 있는 경우 동기적으로 실행되어  
+  스타일 삽입 등을 처리함. (DOM 읽기 또는 변경 금지)
 
-- Mutation:
-  이상적으론 DOM 변경 없음.  
-   불일치가 있으면 최소한의 삽입/갱신/삭제로 수리가 이뤄질 수 있음.  
-  (첫 마운트라 이전 ref는 없으므로 detach 대상도 보통 없음)
+- Mutation:  
+  이상적으론 DOM 변경이 없지만, 불일치가 있는 경우  
+  최소한의 삽입/갱신/삭제로 수리가 이뤄질 수 있음.  
+  (첫 마운트라 이전 ref는 없으므로 Detach 대상도 보통 없음)
 
 - Layout:  
-  여기서 ref가 attach되어 ref.current가 유효해짐.  
-  곧바로 (이번 커밋의) useLayoutEffect 본문이 동기 실행됨.  
-  → 이 시점에 DOM 측정, 동기 포커스/스크롤/스타일 보정을 안전하게 수행.  
+  이 시점에서 ref가 attach되어 ref.current가 유효해짐.  
+  attach 이후 이번 커밋의 useLayoutEffect가 동기 실행됨.  
+  → 이 시점에서 DOM 측정, 동기 포커스/스크롤/스타일 보정을 안전하게 수행.  
   (클래스 컴포넌트라면 componentDidMount도 이때 실행됨.)
 
 - Paint:  
-  브라우저가 변경분을 그립니다.  
+  브라우저가 변경분을 그림.  
   (SSR로 이미 그려진 상태라면, 차이난 부분만 다시 페인트)
 
 - Passive effects:  
@@ -407,23 +407,12 @@ ref를 신뢰할 수 있는 최초 시점은 Layout 단계임.
    2번 호출되는 것처럼 보이는 검증 동작이 있음.
 
 - 루트/하이드레이션 경계(boundary)가 여러 개면  
-  각 경계 단위로 원자적 커밋이 일어나 독립적으로 위 순서를 밟습니다.
+  각 경계 단위로 원자적 커밋이 일어나 독립적으로 위 순서를 따름.
 
-## 하이드레이션의 렌더 단계 = 리컨실리에이션
+## 하이드레이션의 렌더 단계
 
-하이드레이션도 “렌더(=리컨실리에이션) → 커밋”의 동일한 큰 흐름을 따르며,
-**리컨실리에이션의 비교 상대가 ‘서버 DOM’**이라는 점만 다릅니다.
-
-클라이언트에서 React가 요소 트리를 만들며 서버 DOM을 한 노드씩 매칭하려고 시도합니다.
-
-이때는 “이전 Fiber 트리와 비교”가 아니라 **“현재 서버 DOM과 일치 여부 확인”**을 하죠.
-일치하면 재사용 표시, 다르면 그 지점부터 클라이언트 재생성(fallback) 경로로 전환될 수 있어요.
-
-### 커밋 단계
-
-가능한 한 서버 DOM을 재사용하고, 필요한 최소한만 수정합니다(속성 보정, 누락된 노드 삽입 등).
-
-이어서 ref attach → useLayoutEffect(동기) → (페인트) → useEffect(비동기) 순으로 실행됩니다.
+하이드레이션도 “렌더 → 커밋”의 동일한 큰 흐름을 따르며,
+리컨실리에이션의 비교 기준이 서버 DOM 이라는 점만 다름.
 
 ### 불일치(mismatch) 처리
 
@@ -476,7 +465,7 @@ JS 번들 다운로드·실행 + 하이드레이션 비용이 추가(복잡한 �
 
 ##
 
-<details><summary><strong>d. Portal, Modal</strong></summary>
+<details><summary><strong>e. Portal, Modal</strong></summary>
 
 ## 포탈(Portal)
 
@@ -507,7 +496,7 @@ JS 번들 다운로드·실행 + 하이드레이션 비용이 추가(복잡한 �
 
 ##
 
-<details><summary><strong>e. useRef</strong></summary>
+<details><summary><strong>f. useRef</strong></summary>
 
 <details><summary> 요약 </summary>
 
@@ -678,7 +667,7 @@ useRef 변경은 렌더링을 유발하지 않음 → 화면 업데이트가 필
 
 ##
 
-<details><summary>flushSync — DOM 즉시 업데이트</summary>
+<details><summary><strong>g. flushSync — DOM 즉시 업데이트</strong></summary>
 
 ## 사용처
 
