@@ -168,10 +168,25 @@ startTransition으로 감싼 전환(transition) 업데이트는 중단·재개·
 ### Before-Mutation:
 
 DOM 변경 직전에 필요한 읽기/주입 작업을 처리.  
-(이전 커밋의) useLayoutEffect cleanup 실행 → getSnapshotBeforeUpdate, useInsertionEffect
+
+실행 순서:
+1. useInsertionEffect cleanup (이전 렌더의)
+2. useInsertionEffect (현재 렌더의)
+3. useLayoutEffect cleanup (이전 렌더의, 업데이트 시에만)
+4. getSnapshotBeforeUpdate (클래스 컴포넌트)
+
+
+- useInsertionEffect:
+  DOM 변경 전 CSS-in-JS로 스타일을 동기 삽입할 때 사용하는 훅.  (규칙을 세팅)  
+  DOM을 읽거나 레이아웃을 측정해서는 안 됨.
+
+- useLayoutEffect cleanup (업데이트 시):
+  DOM이 변경되기 직전, 이전 렌더의 useLayoutEffect를 정리.  
+  이 시점에서 변경 전 DOM 상태를 측정/캡처할 수 있음.
 
 - getSnapshotBeforeUpdate:  
   변경 직전 마지막 DOM 상태를 캡처해서, 변경 후 활용하는 스냅샷 전달 메커니즘.  
+  componentDidUpdate에서 이 스냅샷을 받아 활용 가능.
   (예: 스크롤 위치 복원 등)
 
 - useInsertionEffect (react18 이후 추가):  
@@ -180,23 +195,49 @@ DOM 변경 직전에 필요한 읽기/주입 작업을 처리.
 
 ### Mutation:
 
-- DOM 변경(추가/삭제/속성 업데이트)
-- 기존 ref 분리(detach)
+Mutation이 끝나면 DOM 트리는 새로운 상태로 바뀌지만,
+아직 브라우저 레이아웃 계산이나 페인트는 일어나지 않음.
+
+- DOM 노드 변경(추가/삭제/속성 업데이트)
+- 제거될 노드의 ref 분리(detach)
+- 새로 추가될 노드의 ref 연결(attach)
 
 ### Layout:
 
-- 새 ref 연결(attach) → useLayoutEffect, componentDidMount/Update 실행
+새 DOM이 완성되었지만 화면에 그려지지는 않은 상태.
+따라서 레이아웃 측정이 가능하며, 스타일/위치를 조정해도 깜빡임 없이 반영 가능.
+
+- ref 최종 확정 (필요시 추가 업데이트)
+- useLayoutEffect 실행
+- componentDidMount / componentDidUpdate 실행
+
+useLayoutEffect 활용:
+- DOM 측정 후 레이아웃에 영향을 주는 변경
+- 포커스/스크롤 위치 즉시 조정
+- 애니메이션 시작 전 초기 상태 설정
+- 깜빡임 방지가 필요한 동기 DOM 조작
+
+무거운 작업을 useLayoutEffect로 수행 시 페인트가 지연됨 
+→ 화면이 늦게 그려져 UX에 안좋은 영향을 끼침
+→ useEffect로 미루거나 작업을 최적화 해야함.
+
 
 ### Paint:
 
-- 브라우저가 화면을 그리는 단계
-- 페인트 이전에 동기 스타일 / 측정 / 포커스 조정을 끝내야 페인트 시 깜빡임/점프를 방지 가능.
-- 무거운 작업을 useLayoutEffect에 넣으면 페인트가 지연될 수 있음.  
-  → useEffect로 미루거나 비용을 줄여야함.
+커밋 단계가 끝난 후, 브라우저가 화면을 실제로 그리는 단계.
+제어권이 브라우저로 넘어가 레이아웃 계산 → 페인트 수행
+
+이 단계부터 DOM 및 스타일 수정 시 깜빡임, 점프 등이 발생함. (추가 계산 -> 재페인트 수행)
+→ useLayoutEffect를 활용하여 Layout 단계에서 수행되도록 구현
 
 ### Passive Effects:
 
-- (이전 커밋의) useEffect cleanup → 이번 커밋의 useEffect 실행
+실행 순서:
+1. useEffect cleanup (이전 렌더의)
+2. useEffect (현재 렌더의)
+
+- 화면이 이미 업데이트된 후 실행되므로 비차단(non-blocking) 방식으로 스케줄링됨
+- 따라서 레이아웃이나 페인트에 영향을 주지 않는 부수 효과 처리에 적합
 
 ## useLayoutEffect + ref 패턴
 
