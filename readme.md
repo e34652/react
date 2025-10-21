@@ -52,7 +52,7 @@ Hook으로 상태/이펙트/구독 등을 선언해 시점을 표현
 - 상태 업데이트는 교체(replace)가 기본(객체 병합은 직접 수행).
 - Server Components는 함수 컴포넌트만 지원함(Hook 사용 불가).
 </details>
-markdown<details><summary>3. 클래스 컴포넌트 ↔ 함수 컴포넌트</summary>
+<details><summary>3. 클래스 컴포넌트 ↔ 함수 컴포넌트</summary>
 
 ## 컴포넌트별 라이프사이클 대응표
 각 생명주기 시점을 관리하는 수단 비교  
