@@ -52,40 +52,44 @@ Hook으로 상태/이펙트/구독 등을 선언해 시점을 표현
 - 상태 업데이트는 교체(replace)가 기본(객체 병합은 직접 수행).
 - Server Components는 함수 컴포넌트만 지원함(Hook 사용 불가).
 </details>
-<details><summary>3. 클래스 컴포넌트 ↔ 함수 컴포넌트</summary>
+markdown<details><summary>3. 클래스 컴포넌트 ↔ 함수 컴포넌트</summary>
 
-## 컴포넌트별 라이프 사이클
+## 컴포넌트별 라이프사이클 대응표
+각 생명주기 시점을 관리하는 수단 비교  
+- 클래스 컴포넌트 = 전용 메서드  
+- 함수 컴포넌트 = Hook
 
-### 마운트 직후(커밋 Layout 단계, 페인트 전 동기 실행)
+### 마운트 완료 시점 (Layout 단계, 페인트 전 동기)
+- 클래스: `componentDidMount`
+- 함수: `useLayoutEffect(() => { ... }, [])`
 
-- 클래스: componentDidMount
-- 함수: useLayoutEffect(() => { ... }, [])
+### 화면 렌더링 완료 후 (페인트 후 비동기)
+- 클래스: 페인트 후 전용 메서드 없음 (모든 메서드가 동기 실행)
+- 함수: `useEffect(() => { ... }, [deps])`
 
-### 마운트/업데이트 후(페인트 후)
+### DOM 변경 직전 스냅샷 (Before-mutation 단계)
+- 클래스: `getSnapshotBeforeUpdate`
+- 함수: 별도의 전용 Hook 없음  
+  (ref + 렌더링 중 이전 값 저장 패턴으로 우회는 가능)
 
-- 클래스: 클래스는 페인트 후 전용 메서드 없음
-- 함수: useEffect 실행
+### 업데이트 완료 시점 (Layout 단계, 페인트 전 동기)
+- 클래스: `componentDidUpdate`
+- 함수: `useLayoutEffect(() => { ... }, [deps])`
 
-### 업데이트 직전 스냅샷(커밋 Before-mutation)
+### 정리(Cleanup) 시점
+언마운트 시:
+- 클래스: `componentWillUnmount`
+- 함수: `useEffect`/`useLayoutEffect`의 cleanup 함수
 
-- 클래스: getSnapshotBeforeUpdate
-- 함수: useLayoutEffect의 cleanup에서 스냅샷 캡처(+ ref) 패턴
+재실행 전 정리:
+- 클래스: 별도 메서드 없음 (componentDidUpdate 내부에서 수동 처리)
+- 함수: `useEffect`/`useLayoutEffect`의 cleanup 함수가 자동 실행
+  - `useEffect` cleanup: 페인트 후 비동기 실행
+  - `useLayoutEffect` cleanup: Layout 단계에서 동기 실행 (페인트 전)
 
-### 업데이트 후(커밋 Layout, 페인트 전 동기)
-
-- 클래스: componentDidUpdate
-- 함수: useLayoutEffect(() => { ... }, [deps])
-
-### 언마운트/업데이트 정리
-
-- 클래스: componentWillUnmount
-- 함수: useEffect의 Clean Up  
-  (레이아웃 단계 정리는 useLayoutEffect의 Clean Up - Before-mutaition에 실행됨)
-
-### 렌더 스킵 최적화
-
-- 클래스: shouldComponentUpdate
-- 함수: React.memo(주) + useMemo/useCallback(보조)
+### 리렌더링 방지 최적화
+- 클래스: `shouldComponentUpdate` (컴포넌트 내부에서 직접 제어)
+- 함수: `React.memo` (컴포넌트 외부에서 래핑) + `useMemo`/`useCallback` (보조)
 
 </details>
 
