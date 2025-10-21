@@ -29,6 +29,9 @@
 Hook이 나오기 전(16.8 이전) 활용되던 컴포넌트.  
 ES6 class로 컴포넌트를 만들고, Method를 통해 시점을 표현.
 
+메서드를 통해 생명주기를 세밀하고 명시적으로 관리함
+(componentDidMount, componentDidUpdate, componentWillUnmount 등)
+
 현재 표준은 함수 컴포넌트 + Hooks이지만 동작은 여전히 지원됨.  
 하지만 에러 바운더리 등 몇몇 기능은 여전히 클래스 방식이 표준임.
 
