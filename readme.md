@@ -221,7 +221,6 @@ useLayoutEffect 활용:
 → 화면이 늦게 그려져 UX에 안좋은 영향을 끼침
 → useEffect로 미루거나 작업을 최적화 해야함.
 
-
 ### Paint:
 
 커밋 단계가 끝난 후, 브라우저가 화면을 실제로 그리는 단계.
@@ -294,43 +293,56 @@ useLayoutEffect 활용:
 
 ## 정의
 
-첫 커밋에서 컴포넌트가 트리에 배치되고, DOM이 생성/연결되며,  
-state와 refs가 초기화될 때(React 관점의 “처음 등장”)
+컴포넌트가 처음으로 React 트리에 추가되고,  
+DOM이 생성/연결되며, state와 refs가 초기화되는 시점
 
 ## 예시
 
-- 조건부 렌더에서 show=false → true가 되어 노드가 새로 생길 때  
-  (또는 JSX에서 제외→포함될 때만 마운트)
-- 키(key) 변경으로 이전 노드가 교체될 때  
-  (key가 바뀌면 상태/이펙트가 파기되고 완전한 언마운트→마운트가 일어남)
+- 조건부 렌더에서 show=false → true 로 변경되어 노드가 새로 생성될 때    
+- 키(key) 변경으로 이전 노드가 새 노드로 교체될 때  
+  (key가 바뀌면 React는 완전히 다른 컴포넌트로 인식 → 언마운트 후 마운트)
+- 라우트 전환 등으로 새 페이지나 컴포넌트가 렌더링 될 때
+- 리스트에 새 항목이 추가될 때
 
-- 라우트/분기 전환 등으로 새 노드가 생성될 때  
-  (중첩 라우팅에선 변경된 경로의 서브트리만 마운트될 수 있음)
+## 마운트 시 실행 순서
 
-## 마운트 직후
+1. Render 단계:
+- 컴포넌트 함수 실행
+- 훅 초기화 (useState, useRef 등)
+- JSX 생성
 
-커밋의 Layout 단계가 실행됨  
-ref 연결 → useLayoutEffect / componentDidMount 동기 실행 (페인트 전)  
-→ 브라우저 페인트 → useEffect 비동기 실행
+2. Commit 단계 - Before-Mutation:
+- useInsertionEffect 실행
 
+**3. Commit 단계 - Mutation:
+- DOM 노드 생성 및 삽입
+- ref 연결
+
+**4. Commit 단계 - Layout:
+- useLayoutEffect 실행 (동기, 페인트 전)
+- componentDidMount 실행
+
+**5. Paint:**
+- 브라우저가 화면에 그림
+
+**6. Commit - Passive Effects:**
+- useEffect 실행 (비동기, 페인트 후)
 </details>
 
 <details><summary>2. Unmount</summary>
 
 ## 정의
 
-커밋의 Mutation 단계에서 DOM/refs가 분리·제거되고, 이어서 상태/이펙트가 파기될 때
+컴포넌트가 React 트리에서 제거되고,  
+관련된 모든 리소스(state, refs, 이펙트)가 정리되는 시점.
 
 ## 예시
 
-- 조건부 렌더에서 show=true → false로 노드가 사라질 때
-
-- 리스트 재조합/키 변경으로 노드가 교체될 때
-
-- 부모가 내려가면서 하위가 함께 제거될 때  
-  (부모가 언마운트되면 자식 서브트리도 함께 언마운트됨)
-
-- 라우팅/분기 전환 등으로 해당 서브트리가 없어질 때
+- 조건부 렌더링에서 `true → false`로 변경되어 노드가 제거될 때
+- `key` 변경으로 기존 노드가 새 노드로 교체될 때
+- 부모 컴포넌트가 언마운트되어 자식도 함께 제거될 때
+- 라우트 전환으로 이전 페이지나 컴포넌트가 사라질 때
+- 리스트에서 항목이 제거될 때
 
 ## 언마운트 직전
 
@@ -338,32 +350,64 @@ ref 연결 → useLayoutEffect / componentDidMount 동기 실행 (페인트 전)
 → DOM이 제거되기 직전에 동기 정리 기회  
 (Mutation 이후에도 해당 노드의 DOM/refs가 존재할 경우)
 
-## 언마운트 직후
+## 언마운트 시 실행 순서
 
-(보통 페인트 이후) useEffect cleanup 실행  
-→ 구독/타이머/리스너 정리 등
+1. Render 단계:
+- 새 트리 계산 (해당 노드 제외)
 
-페인트 이후 비동기로 실행되므로  
-레이아웃 측정/동기 DOM 접근에는 부적합
+2. Commit 단계 - Before-Mutation:
+- useInsertionEffect cleanup 실행 (동기)
 
-## Clean Up
+3. Commit 단계 - Mutation:
+- DOM 노드 제거
+- ref 분리 (ref.current = null)
 
-LayoutEffect: 페인트 전(동기)  
-useEffect: 페인트 후(비동기)
+4. Commit 단계 - Layout:
+- useLayoutEffect cleanup 실행 (동기, 페인트 전)
+- componentWillUnmount 실행
+- 이미 DOM이 제거된 후이므로 해당 노드의 ref.current는 null
+
+5. Paint 단계:
+- 브라우저가 변경된 화면을 그림
+
+6. Commit 단계 - Passive Effects:
+- useEffect cleanup 실행 (비동기, 페인트 후)
+- 구독 해제, 타이머 정리, 리스너 제거 등
 
 </details>
 
 <details><summary>3. 참고</summary>
 
-\* 숨김은 언마운트가 아니며 언마운트 후 setState는 무시됨  
-(비동기 작업·구독은 cleanup에서 반드시 취소/해제)
+## 언마운트 관련 주의사항
 
-\* ref는 Mutation 단계에서 먼저 null로 분리되므로  
-이후 Layout 단계의 cleanup/콜백에서의 ref.current를 신뢰하지 말 것
-\*StrictMode에서 초기 마운트 직후 즉시 언마운트→재마운트 시뮬레이션 가능(부작용 탐지용).
+### ref 접근 시 주의
+- ref는 Mutation 단계에서 먼저 null로 분리됨
+- Layout 단계의 useLayoutEffect cleanup에서 ref.current는 이미 null
+- 언마운트 시점에 ref를 신뢰해서는 안 됨
 
-\* 서버에선 브라우저 DOM이 없어 마운트/이펙트가 실행되지 않음.  
-(하이드레이션 시 마운트 시점에 이펙트가 실행됨)
+### 언마운트 후 setState
+- 언마운트된 컴포넌트에서 setState 호출 시 경고 발생 및 무시됨
+- 비동기 작업(fetch, setTimeout 등)은 cleanup에서 반드시 취소/정리해야 함
+
+## 숨김 vs 언마운트
+
+- `display: none`, `visibility: hidden`: 언마운트 아님 (DOM 존재, state 유지)
+- 조건부 렌더링 (`{show && <Component />}`): 언마운트됨 (DOM 제거, state 초기화)
+
+## StrictMode
+
+개발 모드에서 StrictMode는 초기 마운트 직후:
+1. 즉시 언마운트 (모든 cleanup 실행)
+2. 다시 재마운트 (모든 이펙트 재실행)
+
+→ 이펙트 cleanup이 제대로 작성되었는지 검증하는 용도  
+→ 프로덕션에서는 발생하지 않음
+
+## 서버 사이드 렌더링 (SSR)
+
+- 서버에는 브라우저 DOM이 없으므로 마운트 / 이펙트가 실행되지 않음
+- useEffect, useLayoutEffect는 서버에서 실행 안 됨
+- 클라이언트 하이드레이션 시점에 마운트로 간주되어 이펙트 실행
 
 </details>
 </details>
@@ -374,59 +418,57 @@ useEffect: 페인트 후(비동기)
 
 ## 정의
 
-서버가 미리 그려 보낸 정적 HTML를 클라이언트에서 JS를 통해 인터랙티브하게 만드는 과정.
-
-React가 HTML에 이미 있는 DOM을 재사용하여 React 앱을 연결(attach) 하는 것.  
-(이벤트 리스너 등록, refs 연결, 마운트 시점에 이펙트 실행)
+서버가 미리 렌더링한 정적 HTML을 클라이언트에서 JS를 통해 인터랙티브하게 만드는 과정.
+React가 HTML에 이미 있는 DOM을 재사용하여 React 앱을 연결(attach)하는 것.  
+(이벤트 리스너 등록, ref 연결, 마운트 시점에 이펙트 실행)
 
 ## 흐름
 
-서버:
+### 서버:
+- `renderToString` 또는 스트리밍 SSR로 HTML 생성 및 전송
 
-- renderToString / 스트리밍 SSR로 HTML 전송
+### 브라우저:
+1. HTML 먼저 페인트 (사용자에게 즉시 표시)
+2. JS 번들 다운로드 및 실행
+3. `hydrateRoot` 호출
 
-브라우저:
+### React:
+1. 기존 DOM과 컴포넌트 트리 매칭
+2. 이벤트 리스너 및 ref 연결
+3. 이펙트 실행
 
-- HTML 먼저 페인트(사용자에게 바로 보임) → JS 번들 로드 → hydrateRoot 호출
-
-React:
-
-- 기존 DOM과 가상 트리를 매칭 → 이벤트/refs 연결 → 이펙트 실행
-- 시점  
-  useLayoutEffect: 커밋 직후 동기 실행(페인트 전)  
-  useEffect: 페인트 후 비동기 실행
-
-→ 사용자 입장에선 화면이 “먼저 보이고”, 곧이어 상호작용이 가능해짐
+→ 사용자는 콘텐츠를 먼저 보고, 곧이어 상호작용이 가능해짐
 
 ## SSR 하이드레이션 시점별 타임라인
 
-하이드레이션도 일반 커밋과 동일한 서브-단계로 Reconciliation이 진행됨.
+하이드레이션도 일반 마운트와 동일한 커밋 서브-단계를 거치지만
 
-비교 기준이 “이전 클라이언트 트리”가 아니라 “서버가 만들어 둔 실제 DOM(SSR 마크업)”라는 점이 다름
+비교 대상이 “이전 클라이언트 트리”가 아니라 “서버가 만든 실제 DOM(SSR 마크업)” 이라는 점이 다름
 
 ### (SSR) 초기 표시
 
-서버가 만든 HTML이 먼저 그려져 이미 화면에 보이는 상태입니다.
+서버가 만든 HTML이 먼저 그려져 이미 화면에 보이는 상태.
 (아직 React 이벤트/효과/refs는 붙지 않았음)
 
-### 클라이언트 렌더 단계 (render phase)
+### 렌더 단계 (Render Phase)
 
-기존 DOM을 재사용하면서 다음 UI 스냅샷을 계산.
-
-DOM 조작 없음(측정/변경 X), 이펙트 실행도 아님.
+- 서버 HTML(실제 DOM)과 클라이언트 컴포넌트 트리를 비교
+- 다음 UI 스냅샷 계산
+- DOM 조작 없음, 이펙트 실행 없음
+- 불일치 발견 시 플래그 표시
 
 ### 커밋 단계 (commit phase)
 
 - Before-mutation:  
   하이드레이션은 “마운트”이므로  
-  이전 커밋의 클린업 또는 스냅샷은 없음  
+  이전 커밋의 클린업 및 스냅샷은 없음  
   useInsertionEffect 가 있는 경우 동기적으로 실행되어  
   스타일 삽입 등을 처리함. (DOM 읽기 또는 변경 금지)
 
 - Mutation:  
-  이상적으론 DOM 변경이 없지만, 불일치가 있는 경우  
-  최소한의 삽입/갱신/삭제로 수리가 이뤄질 수 있음.  
-  (첫 마운트라 이전 ref는 없으므로 Detach 대상도 보통 없음)
+  이상적으론 DOM 변경이 없지만(=서버 HTML 재사용),
+  불일치가 있는 경우 최소한의 DOM 수정으로 보정 작업이 이루어짐.
+  (첫 마운트 이므로 이전 ref가 없어 Detach도 없음)
 
 - Layout:  
   이 시점에서 ref가 attach되어 ref.current가 유효해짐.  
@@ -436,15 +478,16 @@ DOM 조작 없음(측정/변경 X), 이펙트 실행도 아님.
 
 - Paint:  
   브라우저가 변경분을 그림.  
-  (SSR로 이미 그려진 상태라면, 차이난 부분만 다시 페인트)
+  SSR로 이미 렌더링된 경우: 차이가 있는 부분만 재페인트
+  불일치로 재생성된 경우: 해당 부분 새로 페인트
 
 - Passive effects:  
-  페인트 후 비동기로 (이번 커밋의) useEffect 실행.  
-  로깅/구독/네트워크 등 비차단 작업을 이때 처리.
+  페인트 후 비동기로 이번 커밋의 useEffect 실행.  
+  로깅/구독/페칭 등 비차단 작업을 이때 처리.
 
 ### 한 줄 요약
 
-ref.attach → useLayoutEffect → (페인트) → useEffect
+ref.attach → useLayoutEffect → Paint → useEffect(비동기)
 
 하이드레이션에서도 순서는 동일하며,  
 ref를 신뢰할 수 있는 최초 시점은 Layout 단계임.
@@ -464,15 +507,19 @@ ref를 신뢰할 수 있는 최초 시점은 Layout 단계임.
 
 ### 불일치(mismatch) 처리
 
-- 경미한 불일치(속성 차이 등):  
-  커밋에서 보정.
+경미한 불일치 (속성 차이 등):
+- 경고 표시
+- 커밋 단계에서 속성 보정
+- 기존 DOM 재사용
 
-- 중대한 불일치(노드 구조가 크게 다름):  
-  해당 서브트리는 버리고 새로 렌더합니다(클라이언트 렌더로 강등).
+중대한 불일치 (구조가 다름):
+- 경고 표시
+- 해당 서브트리 폐기
+- 클라이언트 렌더링으로 재생성
 
 ### Concurrent + SSR
 
-React 18에선 선택적/점진적 하이드레이션(Suspense 경계 등)로 우선순위에 따라 부분적으로 리컨실리에이션을 진행하고 필요 시 중단·재개도 가능합니다.
+React 18에선 선택적/점진적 하이드레이션(Suspense 경계 등)로 우선순위에 따라 부분적으로 리컨실리에이션을 진행하고 필요 시 중단·재개도 가능함.
 
 ## 하이드레이션이 아닌 경우
 
@@ -485,7 +532,7 @@ React 18에선 선택적/점진적 하이드레이션(Suspense 경계 등)로 �
 - 단순 표시/숨김:  
   DOM을 유지한 채 CSS로 숨기는 건 하이드레이션과 무관
 
-## 불일치(mismatch) 처리
+### 불일치(mismatch) 처리
 
 서버 HTML과 클라이언트 렌더 결과가 다를 경우  
 React가 경고를 띄우고, 그 서브트리만 폐기·재생성할 수 있음  
